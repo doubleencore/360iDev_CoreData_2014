@@ -14,6 +14,9 @@
 		3A28844A196DBE15004D538B /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3A288448196DBE15004D538B /* Main.storyboard */; };
 		3A28844C196DBE15004D538B /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3A28844B196DBE15004D538B /* Images.xcassets */; };
 		3A288458196DBE15004D538B /* EarthquakesDemoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A288457196DBE15004D538B /* EarthquakesDemoTests.swift */; };
+		3A288464196DC5F4004D538B /* EarthquakeTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A288463196DC5F4004D538B /* EarthquakeTableViewCell.swift */; };
+		3AE49A8B196F3A820068FA9B /* Earthquake.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AE49A8A196F3A820068FA9B /* Earthquake.swift */; };
+		3AFBEA64196DF42C00C2DB87 /* EarthquakesDataFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AFBEA63196DF42C00C2DB87 /* EarthquakesDataFetcher.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,6 +41,9 @@
 		3A288451196DBE15004D538B /* EarthquakesDemoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EarthquakesDemoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3A288456196DBE15004D538B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		3A288457196DBE15004D538B /* EarthquakesDemoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarthquakesDemoTests.swift; sourceTree = "<group>"; };
+		3A288463196DC5F4004D538B /* EarthquakeTableViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EarthquakeTableViewCell.swift; sourceTree = "<group>"; };
+		3AE49A8A196F3A820068FA9B /* Earthquake.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Earthquake.swift; sourceTree = "<group>"; };
+		3AFBEA63196DF42C00C2DB87 /* EarthquakesDataFetcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EarthquakesDataFetcher.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -85,7 +91,10 @@
 				3A288448196DBE15004D538B /* Main.storyboard */,
 				3A28844B196DBE15004D538B /* Images.xcassets */,
 				3A288441196DBE15004D538B /* EarthquakesDemo.xcdatamodeld */,
+				3AE49A8A196F3A820068FA9B /* Earthquake.swift */,
 				3A28843D196DBE15004D538B /* Supporting Files */,
+				3A288463196DC5F4004D538B /* EarthquakeTableViewCell.swift */,
+				3AFBEA63196DF42C00C2DB87 /* EarthquakesDataFetcher.swift */,
 			);
 			path = EarthquakesDemo;
 			sourceTree = "<group>";
@@ -214,8 +223,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3AE49A8B196F3A820068FA9B /* Earthquake.swift in Sources */,
 				3A288440196DBE15004D538B /* AppDelegate.swift in Sources */,
+				3A288464196DC5F4004D538B /* EarthquakeTableViewCell.swift in Sources */,
 				3A288443196DBE15004D538B /* EarthquakesDemo.xcdatamodeld in Sources */,
+				3AFBEA64196DF42C00C2DB87 /* EarthquakesDataFetcher.swift in Sources */,
 				3A288445196DBE15004D538B /* MasterViewController.swift in Sources */,
 				3A288447196DBE15004D538B /* DetailViewController.swift in Sources */,
 			);
@@ -335,9 +347,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CLANG_ENABLE_MODULES = YES;
 				INFOPLIST_FILE = EarthquakesDemo/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
@@ -346,6 +360,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CLANG_ENABLE_MODULES = YES;
 				INFOPLIST_FILE = EarthquakesDemo/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -405,6 +420,7 @@
 				3A28845D196DBE15004D538B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		3A28845E196DBE15004D538B /* Build configuration list for PBXNativeTarget "EarthquakesDemoTests" */ = {
 			isa = XCConfigurationList;
@@ -413,6 +429,7 @@
 				3A288460196DBE15004D538B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 

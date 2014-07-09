@@ -1,23 +1,27 @@
 //
 //  DetailViewController.swift
-//  EarthquakesDemo
 //
-//  Created by Andrew Morrow on 7/9/14.
 //  Copyright (c) 2014 Double Encore. All rights reserved.
 //
 
 import UIKit
+import MapKit
 
-class DetailViewController: UIViewController, UISplitViewControllerDelegate {
+extension Earthquake: MKAnnotation {
+    var coordinate: CLLocationCoordinate2D {
+        return CLLocationCoordinate2D(latitude: self.latitude.doubleValue, longitude: self.longitude.doubleValue)
+    }
+}
 
-    @IBOutlet var detailDescriptionLabel: UILabel
+class DetailViewController: UIViewController, UISplitViewControllerDelegate, MKMapViewDelegate {
+
+    var mapView: MKMapView!
     var masterPopoverController: UIPopoverController? = nil
 
-
-    var detailItem: AnyObject? {
+    var detailItem: Earthquake? {
         didSet {
             // Update the view.
-            self.configureView()
+            self.configureView(detailItem)
 
             if self.masterPopoverController != nil {
                 self.masterPopoverController!.dismissPopoverAnimated(true)
@@ -25,19 +29,26 @@ class DetailViewController: UIViewController, UISplitViewControllerDelegate {
         }
     }
 
-    func configureView() {
+    func configureView(maybeQuake: Earthquake?) {
         // Update the user interface for the detail item.
-        if let detail: AnyObject = self.detailItem {
-            if let label = self.detailDescriptionLabel {
-                label.text = detail.valueForKey("timeStamp").description
-            }
+        if let quake = maybeQuake {
+            self.mapView.addAnnotation(quake)
+            self.mapView.setCenterCoordinate(quake.coordinate, animated: true)
         }
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
-        self.configureView()
+        
+        var mapView = MKMapView()
+        mapView.delegate = self
+        mapView.setTranslatesAutoresizingMaskIntoConstraints(false)
+        self.view.addSubview(mapView)
+        self.view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|[map]|", options: .DirectionLeadingToTrailing, metrics: nil, views: ["map": mapView]))
+        self.view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:|[map]|", options: .DirectionLeadingToTrailing, metrics: nil, views: ["map": mapView]))
+        self.mapView = mapView
+        
+        self.configureView(nil)
     }
 
     override func didReceiveMemoryWarning() {

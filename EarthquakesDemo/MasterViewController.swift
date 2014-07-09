@@ -1,19 +1,22 @@
 //
 //  MasterViewController.swift
-//  EarthquakesDemo
 //
-//  Created by Andrew Morrow on 7/9/14.
 //  Copyright (c) 2014 Double Encore. All rights reserved.
 //
 
 import UIKit
 import CoreData
 
-class MasterViewController: UITableViewController, NSFetchedResultsControllerDelegate {
+class MasterViewController: UITableViewController {
 
     var detailViewController: DetailViewController? = nil
     var managedObjectContext: NSManagedObjectContext? = nil
-
+    var earthquakesDataFetcher: EarthquakesDataFetcher? = nil
+    var dateFormatter: NSDateFormatter? = nil
+    var magnitudeFormatter: NSNumberFormatter? = nil
+    
+    @IBOutlet var refreshButton: UIBarButtonItem!
+    var refreshSpinner: UIBarButtonItem? = nil
 
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -23,94 +26,82 @@ class MasterViewController: UITableViewController, NSFetchedResultsControllerDel
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
-        self.navigationItem.leftBarButtonItem = self.editButtonItem()
+        
+        let spinner = UIActivityIndicatorView(activityIndicatorStyle: .Gray)
+        refreshSpinner = UIBarButtonItem(customView: spinner)
+        
+        self.dateFormatter = NSDateFormatter()
+        dateFormatter!.timeStyle = .ShortStyle;
+        dateFormatter!.dateStyle = .ShortStyle;
+        
+        self.magnitudeFormatter = NSNumberFormatter()
+        magnitudeFormatter!.positiveFormat = "2.1"
+        magnitudeFormatter!.negativeFormat = "-2.1"
+        magnitudeFormatter!.roundingIncrement = 0.1
+        magnitudeFormatter!.roundingMode = .RoundHalfUp
 
-        let addButton = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: "insertNewObject:")
-        self.navigationItem.rightBarButtonItem = addButton
-        let controllers = self.splitViewController.viewControllers
+        let controllers = self.splitViewController!.viewControllers
         self.detailViewController = controllers[controllers.count-1].topViewController as? DetailViewController
     }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
-    }
-
-    func insertNewObject(sender: AnyObject) {
-        let context = self.fetchedResultsController.managedObjectContext
-        let entity = self.fetchedResultsController.fetchRequest.entity
-        let newManagedObject = NSEntityDescription.insertNewObjectForEntityForName(entity.name, inManagedObjectContext: context) as NSManagedObject
-             
-        // If appropriate, configure the new managed object.
-        // Normally you should use accessor methods, but using KVC here avoids the need to add a custom class to the template.
-        newManagedObject.setValue(NSDate.date(), forKey: "timeStamp")
-             
-        // Save the context.
-        var error: NSError? = nil
-        if !context.save(&error) {
-            // Replace this implementation with code to handle the error appropriately.
-            // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-            //println("Unresolved error \(error), \(error.userInfo)")
-            abort()
-        }
-    }
-
-    // #pragma mark - Segues
-
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        if segue.identifier == "showDetail" {
-            let indexPath = self.tableView.indexPathForSelectedRow()
-            let object = self.fetchedResultsController.objectAtIndexPath(indexPath) as NSManagedObject
-            ((segue.destinationViewController as UINavigationController).topViewController as DetailViewController).detailItem = object
+    
+    // #pragma mark - Actions
+    
+    @IBAction func refreshTapped(AnyObject) {
+        self.navigationItem.rightBarButtonItem = refreshSpinner
+        (refreshSpinner!.customView as UIActivityIndicatorView).startAnimating()
+        self.earthquakesDataFetcher!.fetchEarthquakeData() { (success: Bool, error: NSError?) -> Void in
+            if success {
+                self.fetchedResultsController.performFetch(nil)
+                self.tableView.reloadData()
+            }
+            else if let err = error {
+                NSLog("Error fetching earthquakes: %@", err)
+            }
+            else {
+                NSLog("Unknown error fetching earthquakes")
+            }
+            
+            (self.refreshSpinner!.customView as UIActivityIndicatorView).stopAnimating()
+            self.navigationItem.rightBarButtonItem = self.refreshButton
         }
     }
 
     // #pragma mark - Table View
 
     override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
-        return self.fetchedResultsController.sections.count
+        if let count = self.fetchedResultsController.sections?.count {
+            return count
+        }
+        else {
+            return 0
+        }
     }
 
     override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        let sectionInfo = self.fetchedResultsController.sections[section] as NSFetchedResultsSectionInfo
-        return sectionInfo.numberOfObjects
+        if let sectionInfo = self.fetchedResultsController.sections?[section] as? NSFetchedResultsSectionInfo {
+            return sectionInfo.numberOfObjects
+        }
+        else {
+            return 0
+        }
     }
 
     override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCellWithIdentifier("Cell", forIndexPath: indexPath) as UITableViewCell
+        let cell = tableView.dequeueReusableCellWithIdentifier("Cell", forIndexPath: indexPath) as EarthquakeTableViewCell
         self.configureCell(cell, atIndexPath: indexPath)
         return cell
     }
 
-    override func tableView(tableView: UITableView, canEditRowAtIndexPath indexPath: NSIndexPath) -> Bool {
-        // Return false if you do not want the specified item to be editable.
-        return true
-    }
-
-    override func tableView(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle, forRowAtIndexPath indexPath: NSIndexPath) {
-        if editingStyle == .Delete {
-            let context = self.fetchedResultsController.managedObjectContext
-            context.deleteObject(self.fetchedResultsController.objectAtIndexPath(indexPath) as NSManagedObject)
-                
-            var error: NSError? = nil
-            if !context.save(&error) {
-                // Replace this implementation with code to handle the error appropriately.
-                // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                //println("Unresolved error \(error), \(error.userInfo)")
-                abort()
-            }
-        }
-    }
-
     override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        let object = self.fetchedResultsController.objectAtIndexPath(indexPath) as NSManagedObject
+        let object = self.fetchedResultsController.objectAtIndexPath(indexPath) as Earthquake
         self.detailViewController!.detailItem = object
     }
 
-    func configureCell(cell: UITableViewCell, atIndexPath indexPath: NSIndexPath) {
-        let object = self.fetchedResultsController.objectAtIndexPath(indexPath) as NSManagedObject
-        cell.textLabel.text = object.valueForKey("timeStamp").description
+    func configureCell(cell: EarthquakeTableViewCell, atIndexPath indexPath: NSIndexPath) {
+        let earthquake = self.fetchedResultsController.objectAtIndexPath(indexPath) as Earthquake
+        cell.magnitudeLabel.text = self.magnitudeFormatter!.stringFromNumber(earthquake.magnitude)
+        cell.placeLabel.text = earthquake.place
+        cell.dateLabel.text = self.dateFormatter!.stringFromDate(earthquake.quakeTime)
     }
 
     // #pragma mark - Fetched results controller
@@ -121,80 +112,27 @@ class MasterViewController: UITableViewController, NSFetchedResultsControllerDel
         }
         
         let fetchRequest = NSFetchRequest()
-        // Edit the entity name as appropriate.
-        let entity = NSEntityDescription.entityForName("Event", inManagedObjectContext: self.managedObjectContext)
+        let entity = NSEntityDescription.entityForName("Earthquake", inManagedObjectContext: self.managedObjectContext!)
         fetchRequest.entity = entity
         
-        // Set the batch size to a suitable number.
         fetchRequest.fetchBatchSize = 20
         
-        // Edit the sort key as appropriate.
-        let sortDescriptor = NSSortDescriptor(key: "timeStamp", ascending: false)
+        let sortDescriptor = NSSortDescriptor(key: "quakeTime", ascending: false)
         let sortDescriptors = [sortDescriptor]
         
         fetchRequest.sortDescriptors = [sortDescriptor]
         
-        // Edit the section name key path and cache name if appropriate.
-        // nil for section name key path means "no sections".
-        let aFetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.managedObjectContext, sectionNameKeyPath: nil, cacheName: "Master")
-        aFetchedResultsController.delegate = self
+        let aFetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.managedObjectContext!, sectionNameKeyPath: nil, cacheName: nil)
         _fetchedResultsController = aFetchedResultsController
         
     	var error: NSError? = nil
     	if !_fetchedResultsController!.performFetch(&error) {
-    	     // Replace this implementation with code to handle the error appropriately.
-    	     // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development. 
-             //println("Unresolved error \(error), \(error.userInfo)")
+             println("Unresolved error \(error), \(error!.userInfo)")
     	     abort()
     	}
         
         return _fetchedResultsController!
     }    
     var _fetchedResultsController: NSFetchedResultsController? = nil
-
-    func controllerWillChangeContent(controller: NSFetchedResultsController) {
-        self.tableView.beginUpdates()
-    }
-
-    func controller(controller: NSFetchedResultsController, didChangeSection sectionInfo: NSFetchedResultsSectionInfo, atIndex sectionIndex: Int, forChangeType type: NSFetchedResultsChangeType) {
-        switch type {
-            case NSFetchedResultsChangeInsert:
-                self.tableView.insertSections(NSIndexSet(index: sectionIndex), withRowAnimation: .Fade)
-            case NSFetchedResultsChangeDelete:
-                self.tableView.deleteSections(NSIndexSet(index: sectionIndex), withRowAnimation: .Fade)
-            default:
-                return
-        }
-    }
-
-    func controller(controller: NSFetchedResultsController, didChangeObject anObject: AnyObject, atIndexPath indexPath: NSIndexPath, forChangeType type: NSFetchedResultsChangeType, newIndexPath: NSIndexPath) {
-        switch type {
-            case NSFetchedResultsChangeInsert:
-                tableView.insertRowsAtIndexPaths([newIndexPath], withRowAnimation: .Fade)
-            case NSFetchedResultsChangeDelete:
-                tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation: .Fade)
-            case NSFetchedResultsChangeUpdate:
-                self.configureCell(tableView.cellForRowAtIndexPath(indexPath), atIndexPath: indexPath)
-            case NSFetchedResultsChangeMove:
-                tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation: .Fade)
-                tableView.insertRowsAtIndexPaths([newIndexPath], withRowAnimation: .Fade)
-            default:
-                return
-        }
-    }
-
-    func controllerDidChangeContent(controller: NSFetchedResultsController) {
-        self.tableView.endUpdates()
-    }
-
-    /*
-     // Implementing the above methods to update the table view in response to individual changes may have performance implications if a large number of changes are made simultaneously. If this proves to be an issue, you can instead just implement controllerDidChangeContent: which notifies the delegate that all section and object changes have been processed.
-     
-     func controllerDidChangeContent(controller: NSFetchedResultsController) {
-         // In the simplest, most efficient, case, reload the table view.
-         self.tableView.reloadData()
-     }
-     */
-
 }
 
