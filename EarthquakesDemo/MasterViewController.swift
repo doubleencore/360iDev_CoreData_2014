@@ -7,7 +7,7 @@
 import UIKit
 import CoreData
 
-class MasterViewController: UITableViewController {
+class MasterViewController: UITableViewController, NSFetchedResultsControllerDelegate {
 
     var detailViewController: DetailViewController? = nil
     var managedObjectContext: NSManagedObjectContext? = nil
@@ -50,17 +50,6 @@ class MasterViewController: UITableViewController {
         self.navigationItem.rightBarButtonItem = refreshSpinner
         (refreshSpinner!.customView as UIActivityIndicatorView).startAnimating()
         self.earthquakesDataFetcher!.fetchEarthquakeData() { (success: Bool, error: NSError?) -> Void in
-            if success {
-                self.fetchedResultsController.performFetch(nil)
-                self.tableView.reloadData()
-            }
-            else if let err = error {
-                NSLog("Error fetching earthquakes: %@", err)
-            }
-            else {
-                NSLog("Unknown error fetching earthquakes")
-            }
-            
             (self.refreshSpinner!.customView as UIActivityIndicatorView).stopAnimating()
             self.navigationItem.rightBarButtonItem = self.refreshButton
         }
@@ -123,6 +112,7 @@ class MasterViewController: UITableViewController {
         fetchRequest.sortDescriptors = [sortDescriptor]
         
         let aFetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.managedObjectContext!, sectionNameKeyPath: nil, cacheName: nil)
+        aFetchedResultsController.delegate = self
         _fetchedResultsController = aFetchedResultsController
         
     	var error: NSError? = nil
@@ -134,5 +124,12 @@ class MasterViewController: UITableViewController {
         return _fetchedResultsController!
     }    
     var _fetchedResultsController: NSFetchedResultsController? = nil
+    
+    // #pragma mark - Fetched results controller delegate
+
+    func controllerDidChangeContent(controller: NSFetchedResultsController) {
+        self.tableView.reloadData()
+    }
+    
 }
 

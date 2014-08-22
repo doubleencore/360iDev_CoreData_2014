@@ -11,6 +11,7 @@ class EarthquakesDataFetcher: NSObject {
     
     var networkSession: NSURLSession
     var storeCoordinator: NSPersistentStoreCoordinator
+    var contextSavedNotification: NSNotification?
     
     init(persistentStoreCoordinator: NSPersistentStoreCoordinator!) {
         networkSession = NSURLSession(configuration: NSURLSessionConfiguration.defaultSessionConfiguration())
@@ -102,17 +103,27 @@ class EarthquakesDataFetcher: NSObject {
                         }
                     }
                     
+                    NSNotificationCenter.defaultCenter().addObserver(self, selector: "contextDidSave:", name: NSManagedObjectContextDidSaveNotification, object: context)
+                    
                     var blockError: NSError? = nil
-                    if context.save(&blockError) && completionHandler != nil {
+                    if context.save(&blockError) {
+                        let notif = self.contextSavedNotification
                         dispatch_async(dispatch_get_main_queue()) {
-                            completionHandler!(success: true, error: nil)
+                            if notif != nil {
+                                (UIApplication.sharedApplication().delegate as AppDelegate).managedObjectContext.mergeChangesFromContextDidSaveNotification(notif)
+                            }
+                            completionHandler?(success: true, error: nil)
                         }
+                        self.contextSavedNotification = nil
                     }
                     else if completionHandler != nil {
                         dispatch_async(dispatch_get_main_queue()) {
                             completionHandler!(success: false, error: blockError)
                         }
                     }
+                    
+                    NSNotificationCenter.defaultCenter().removeObserver(self, name: NSManagedObjectContextDidSaveNotification, object: context)
+                    
                     NSLog("Finished fetching quakes.")
                 }
             }
@@ -123,5 +134,9 @@ class EarthquakesDataFetcher: NSObject {
                 }
             }
         }
+    }
+    
+    func contextDidSave(notification: NSNotification) {
+        self.contextSavedNotification = notification
     }
 }
