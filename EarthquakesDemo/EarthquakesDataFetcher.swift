@@ -10,12 +10,9 @@ import CoreData
 class EarthquakesDataFetcher: NSObject {
     
     var networkSession: NSURLSession
-    var storeCoordinator: NSPersistentStoreCoordinator
-    var contextSavedNotification: NSNotification?
     
-    init(persistentStoreCoordinator: NSPersistentStoreCoordinator!) {
+    override init() {
         networkSession = NSURLSession(configuration: NSURLSessionConfiguration.defaultSessionConfiguration())
-        storeCoordinator = persistentStoreCoordinator
         super.init()
     }
     
@@ -36,10 +33,8 @@ class EarthquakesDataFetcher: NSObject {
             let sortedQuakes = quakes?.sortedArrayUsingDescriptors([NSSortDescriptor(key: "id", ascending: true)])
             
             if let typedQuakes = sortedQuakes as? [Dictionary<String, AnyObject>] {
-                let coordinator = self.storeCoordinator
-                let context = NSManagedObjectContext(concurrencyType: .PrivateQueueConcurrencyType)
-                context.performBlock() {
-                    context.persistentStoreCoordinator = coordinator
+                dispatch_async(dispatch_get_main_queue()) {
+                    let context = (UIApplication.sharedApplication().delegate as AppDelegate).managedObjectContext
                     NSLog("Started parsing quakes...")
                     
                     let sliceIDs = typedQuakes.map() { (quakeDict: Dictionary<String, AnyObject>) -> AnyObject? in
@@ -103,26 +98,13 @@ class EarthquakesDataFetcher: NSObject {
                         }
                     }
                     
-                    NSNotificationCenter.defaultCenter().addObserver(self, selector: "contextDidSave:", name: NSManagedObjectContextDidSaveNotification, object: context)
-                    
                     var blockError: NSError? = nil
                     if context.save(&blockError) {
-                        let notif = self.contextSavedNotification
-                        dispatch_async(dispatch_get_main_queue()) {
-                            if notif != nil {
-                                (UIApplication.sharedApplication().delegate as AppDelegate).managedObjectContext.mergeChangesFromContextDidSaveNotification(notif)
-                            }
-                            completionHandler?(success: true, error: nil)
-                        }
-                        self.contextSavedNotification = nil
+                        completionHandler?(success: true, error: nil)
                     }
-                    else if completionHandler != nil {
-                        dispatch_async(dispatch_get_main_queue()) {
-                            completionHandler!(success: false, error: blockError)
-                        }
+                    else {
+                        completionHandler?(success: false, error: blockError)
                     }
-                    
-                    NSNotificationCenter.defaultCenter().removeObserver(self, name: NSManagedObjectContextDidSaveNotification, object: context)
                     
                     NSLog("Finished fetching quakes.")
                 }
@@ -134,9 +116,5 @@ class EarthquakesDataFetcher: NSObject {
                 }
             }
         }
-    }
-    
-    func contextDidSave(notification: NSNotification) {
-        self.contextSavedNotification = notification
     }
 }

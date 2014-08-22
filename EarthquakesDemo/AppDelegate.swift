@@ -118,7 +118,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     var earthquakesDataFetcher: EarthquakesDataFetcher {
         if _earthquakesDataFetcher == nil {
-            _earthquakesDataFetcher = EarthquakesDataFetcher(persistentStoreCoordinator: self.persistentStoreCoordinator)
+            _earthquakesDataFetcher = EarthquakesDataFetcher()
         }
         return _earthquakesDataFetcher!
     }
